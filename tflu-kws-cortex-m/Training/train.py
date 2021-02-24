@@ -54,7 +54,7 @@ def train():
                   metrics=['accuracy'])
 
     log_dir = FLAGS.summaries_dir
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
     train_data = audio_processor.get_data(audio_processor.Modes.TRAINING,
                                           FLAGS.background_frequency, FLAGS.background_volume,
