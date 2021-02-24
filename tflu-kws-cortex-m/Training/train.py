@@ -18,6 +18,7 @@ from pathlib import Path
 import tensorflow as tf
 import numpy as np
 
+from matplotlib import pyplot as plt
 import data
 import models
 
@@ -52,6 +53,9 @@ def train():
                   loss=tf.keras.losses.SparseCategoricalCrossentropy(),
                   metrics=['accuracy'])
 
+    log_dir = FLAGS.summaries_dir
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
     train_data = audio_processor.get_data(audio_processor.Modes.TRAINING,
                                           FLAGS.background_frequency, FLAGS.background_volume,
                                           int((FLAGS.time_shift_ms * FLAGS.sample_rate) / 1000))
@@ -73,11 +77,45 @@ def train():
         save_best_only=True)
 
     # Train the model
-    model.fit(x=train_data,
+    history = model.fit(x=train_data,
               steps_per_epoch=FLAGS.eval_step_interval,
               epochs=training_epoch_max,
               validation_data=val_data,
-              callbacks=[model_checkpoint_callback])
+              callbacks=[model_checkpoint_callback,tensorboard_callback])
+
+    # Show Accuracy and Validation with pyplot
+
+    # Retrieve a list of accuracy results on training and validation data
+    # sets for each training epoch
+    acc = history.history['accuracy']
+    val_acc = history.history['val_accuracy']
+
+    # Retrieve a list of list results on training and validation data
+    # sets for each training epoch
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    # Get number of epochs
+    epochs = range(len(acc))
+
+    # Plot training and validation accuracy per epoch
+    plt.plot(epochs, acc, label="accuracy")
+    plt.plot(epochs, val_acc,label="val_accuracy")
+    plt.title('Training and validation accuracy')
+    plt.ylabel('accuracy/val_accuracy')
+    plt.xlabel('epoch')
+    plt.legend()
+    plt.savefig(f'./{FLAGS.model_architecture}_{FLAGS.model_size_info[0]}_acc_val_acc_batch_{FLAGS.batch_size}.png')
+    plt.figure()
+
+    # Plot training and validation loss per epoch
+    plt.plot(epochs, loss, label="loss")
+    plt.plot(epochs, val_loss, label="val_loss")
+    plt.title('Training and validation loss')
+    plt.ylabel('loss/val_loss')
+    plt.xlabel('epoch')
+    plt.legend()
+    plt.savefig(f'./{FLAGS.model_architecture}_{FLAGS.model_size_info[0]}_loss_val_loss_batch_{FLAGS.batch_size}.png')
 
     # Test and save the model.
     test_data = audio_processor.get_data(audio_processor.Modes.TESTING)
@@ -85,8 +123,7 @@ def train():
 
     test_loss, test_acc = model.evaluate(x=test_data)
     print(f'Final test accuracy: {test_acc*100:.2f}%')
-
-
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(

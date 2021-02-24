@@ -75,7 +75,7 @@ def calculate_mfcc(audio_signal, audio_sample_rate, window_size, window_stride, 
     """
     spectrogram = audio_ops.audio_spectrogram(input=audio_signal, window_size=window_size, stride=window_stride,
                                               magnitude_squared=True)
-
+    # lower_frequency_limit = 200, upper_frequency_limit=7800 ³Ö¾îÁÜ (default value -> lower_frequency_limit=20, upper_frequency_limit=4000)
     mfcc_features = audio_ops.mfcc(spectrogram, audio_sample_rate, dct_coefficient_count=num_mfcc)
 
     return mfcc_features
